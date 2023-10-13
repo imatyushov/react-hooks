@@ -4,7 +4,7 @@ import equal from "fast-deep-equal";
 export function usePreviousDeps<T>(value: T) {
     const valueRef = useRef<T | null>(null);
     useEffect(() => {
-        valueRef.current = value
+        valueRef.current = value;
     }, [value]);
 
     return valueRef;
@@ -16,7 +16,7 @@ export function useCustomDepsCompare(deps: any[], isEqual:(a: any, b: any) => bo
     if (!isEqual(prevDeps.current, deps)) {
         countRef.current ++;
     }
-    return [countRef.current]
+    return [countRef.current];
 }
 
 export function useDeepEffect(callback: React.EffectCallback, deps: any[]) {

@@ -1,25 +1,31 @@
-import {useState} from "react";
-import {useDeepEffect} from "./customHooks/DepsCheckHook";
+import {useEffect, useReducer, useRef} from "react";
+import {useCombinedRefs} from "./customHooks/useCombinedRefs";
 
-export function App() {
-    const [count, setCount] = useState(0);
+function Input(props: any) {
+    const {inputRef: parentRef, ...rest} = props;
+    const childRef = useRef(null);
+    const [, forceUpdate] = useReducer(state => state + 1, 0);
 
-    const obj = {
-        a: 0,
-        foo: {
-            bar: 'baz'
-        }
-    }
+    useEffect(() => {
+        childRef.current?.focus();
+        console.log('child',childRef.current)
+    }, []);
 
-    useDeepEffect(() => {
-        console.log('change obj')
-    }, [obj])
+    const callbackRef = useCombinedRefs(childRef, parentRef);
 
-    return(
+    return (
         <div>
-            <h1>{count}</h1>
-            <button onClick={() => setCount(prev => prev + 1)}>Increment</button>
-            <button onClick={() => setCount(prev => prev - 1)}>Decrement</button>
+            <button onClick={forceUpdate}>update</button>
+            <input {...rest} ref={callbackRef}/>
         </div>
     )
+}
+
+export function App () {
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        console.log('parent', inputRef.current);
+    }, [])
+    return <Input inputRef={inputRef}/>
 }
