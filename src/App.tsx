@@ -1,31 +1,35 @@
-import {useEffect, useReducer, useRef} from "react";
-import {useCombinedRefs} from "./customHooks/useCombinedRefs";
+import {memo, useCallback, useState} from "react";
+import {useLatest} from "./customHooks/useLatest";
 
-function Input(props: any) {
-    const {inputRef: parentRef, ...rest} = props;
-    const childRef = useRef(null);
-    const [, forceUpdate] = useReducer(state => state + 1, 0);
-
-    useEffect(() => {
-        childRef.current?.focus();
-        console.log('child',childRef.current)
-    }, []);
-
-    const callbackRef = useCombinedRefs(childRef, parentRef);
-
-    return (
-        <div>
-            <button onClick={forceUpdate}>update</button>
-            <input {...rest} ref={callbackRef}/>
-        </div>
-    )
+interface IProps {
+    text: string;
+    onClick: () => void;
 }
 
-export function App () {
-    const inputRef = useRef<HTMLInputElement>(null);
+const Button = memo((props: IProps) => {
+    const {text, onClick} = props;
 
-    useEffect(() => {
-        console.log('parent', inputRef.current);
-    }, [])
-    return <Input inputRef={inputRef}/>
+    console.log('button rendered');
+    return <button onClick={onClick}>{text}</button>;
+})
+
+export function App() {
+    const [text, setText] = useState('');
+    const latestText = useLatest(text);
+
+    const onClick = useCallback(() => {
+        console.log('save text:', latestText.current);
+    }, [latestText]);
+
+    return (
+        <div className='App'>
+            <input
+                value={text}
+                onChange={(event) =>
+                    setText(event.target.value)}
+                placeholder={'Search...'}
+            />
+            <Button text='submit' onClick={onClick} />
+        </div>
+    )
 }
