@@ -1,35 +1,49 @@
-import {memo, useCallback, useState} from "react";
-import {useLatest} from "./customHooks/useLatest";
+import {useReducer, useRef, useState} from "react";
+import {useOutsideClick} from "./customHooks/useOutsideClick";
 
-interface IProps {
-    text: string;
-    onClick: () => void;
+interface ITooltipProps {
+    isOpened: boolean;
+    onClose: () => void;
 }
 
-const Button = memo((props: IProps) => {
-    const {text, onClick} = props;
+function Tooltip(props: ITooltipProps) {
+    const {isOpened, onClose} = props;
+    const tooltipRef = useRef(null);
 
-    console.log('button rendered');
-    return <button onClick={onClick}>{text}</button>;
-})
+    useOutsideClick(tooltipRef, onClose, isOpened);
 
-export function App() {
-    const [text, setText] = useState('');
-    const latestText = useLatest(text);
-
-    const onClick = useCallback(() => {
-        console.log('save text:', latestText.current);
-    }, [latestText]);
+    if (!isOpened) return null;
 
     return (
-        <div className='App'>
-            <input
-                value={text}
-                onChange={(event) =>
-                    setText(event.target.value)}
-                placeholder={'Search...'}
-            />
-            <Button text='submit' onClick={onClick} />
+        <div ref={tooltipRef} className='tooltip'>
+            <div>Some text</div>
         </div>
+    )
+}
+
+export function App() {
+    const [isOpen, setIsOpen] = useState(false);
+    const [, forceUpdate] = useReducer(state => state + 1, 0);
+
+    console.log('---')
+    function onClose() {
+        setIsOpen(false);
+    }
+    return (
+        <>
+            <button onClick={forceUpdate}>update</button>
+            <div className='tooltip-container'>
+                <Tooltip
+                    isOpened={isOpen}
+                    onClose={onClose}
+                />
+                <button
+                    onClick={() => setIsOpen(prevState => !prevState)}
+                    className='tooltip trigger'
+                >
+                    Click to open tooltip
+                </button>
+            </div>
+        </>
     )
 }
