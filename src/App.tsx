@@ -1,48 +1,63 @@
-import {useReducer, useRef, useState} from "react";
-import {useOutsideClick} from "./customHooks/useOutsideClick";
+import {useEffect, useReducer, useRef, useState} from 'react';
+import {initialProps, updateRandomProp} from "./utils/utils";
 
-interface ITooltipProps {
-    isOpened: boolean;
-    onClose: () => void;
+//Todo: работа useEffect, только после того как состоится рендер и обновится дом
+
+export function useWhyDidUpdate(currentProps) {
+    const previousPropRef = useRef(null);
+    useEffect(() => {
+        previousPropRef.current = currentProps;
+    }, [currentProps]);
+
+    const previousProps = previousPropRef.current;
+
+    if (!previousProps) {
+        console.log('initial first render');
+        return;
+    }
+    const previousKeys = Object.keys(previousProps);
+    const currentKeys = Object.keys(currentProps);
+
+    const keys = [...new Set(currentKeys.concat(previousKeys))];
+
+    let hasChanged = false;
+
+    keys.forEach((key) => {
+        if (currentProps[key] !== previousProps[key]) {
+            console.log(`prop ${key} changed`);
+            console.log(`prev value ${previousProps[key]}`);
+            console.log(`current value ${currentProps[key]}`);
+            hasChanged = true;
+        }
+    });
+
+    if (!hasChanged) {
+        console.log('state changed')
+    }
 }
 
-function Tooltip(props: ITooltipProps) {
-    const {isOpened, onClose} = props;
-    const tooltipRef = useRef(null);
-
-    useOutsideClick(tooltipRef, onClose, isOpened);
-
-    if (!isOpened) return null;
-
+function InnerComponent(props) {
+    useWhyDidUpdate(props);
     return (
-        <div ref={tooltipRef} className='tooltip'>
-            <div>Some text</div>
+        <div>
+            <pre>{JSON.stringify(props, null, 10)}</pre>
         </div>
     )
 }
 
 export function App() {
-    const [isOpen, setIsOpen] = useState(false);
-    const [, forceUpdate] = useReducer(state => state + 1, 0);
+    const [props, setProps] = useState(() => initialProps);
+    const [, forceUpdate] = useReducer(count =>  count + 1, 0);
 
-    console.log('---')
-    function onClose() {
-        setIsOpen(false);
-    }
     return (
         <>
-            <button onClick={forceUpdate}>update</button>
-            <div className='tooltip-container'>
-                <Tooltip
-                    isOpened={isOpen}
-                    onClose={onClose}
-                />
+            <button onClick={forceUpdate}>Update App</button>
+            <div className='App'>
                 <button
-                    onClick={() => setIsOpen(prevState => !prevState)}
-                    className='tooltip trigger'
-                >
-                    Click to open tooltip
+                    onClick={() => setProps((props) => updateRandomProp(props))}>
+                    Update
                 </button>
+                <InnerComponent {...props}/>
             </div>
         </>
     )
