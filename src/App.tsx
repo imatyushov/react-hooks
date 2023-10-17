@@ -1,31 +1,59 @@
-import {useReducer, useState} from 'react';
-import {initialProps, updateRandomProp} from "./utils/utils";
-import {useWhyDidUpdate} from "./customHooks/useWhyDidUpdate";
+import {useEffect, useReducer, useRef, useState} from 'react';
 
-//Todo: работа useEffect, только после того как состоится рендер и обновится дом
+//Todo: жизненный цикл компонента mount -> update -> unmount
 
-function InnerComponent(props) {
-    useWhyDidUpdate(props);
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function useIsMounted() {
+    const isMounted = useRef(false);
+    useEffect(() => {
+        isMounted.current = true;
+        return () => {
+            isMounted.current = false;
+        }
+    }, [])
+    return isMounted.current;
+}
+
+
+function List() {
+    const [list, setList] = useState([]);
+    const isMountedApp = useIsMounted();
+    console.log(isMountedApp)
+
+    useEffect(() => {
+        sleep(3000)
+            .then(() => {setList([1, 2, 3, 4, 5])})
+
+        return () => {}
+
+    }, []);
+
+    if (list.length === 0) {
+        return <div>Loading...</div>
+    }
     return (
-        <div>
-            <pre>{JSON.stringify(props, null, 10)}</pre>
-        </div>
-    )
+       <ul>
+           {list.map((item) =>
+               <li key={item}>{item}</li>
+           )}
+       </ul>
+    );
 }
 
 export function App() {
-    const [props, setProps] = useState(() => initialProps);
-    const [, forceUpdate] = useReducer(count =>  count + 1, 0);
+    const [isVisible, setIsVisible] = useState(false);
+    const [, forceUpdate] = useReducer(c => c + 1, 0);
+    console.log('App updated');
 
     return (
         <>
             <button onClick={forceUpdate}>Update App</button>
-            <div className='App'>
-                <button
-                    onClick={() => setProps((props) => updateRandomProp(props))}>
-                    Update
-                </button>
-                <InnerComponent {...props}/>
+            <div>
+                <button onClick={() => setIsVisible((visible) => !visible)}>Toggle</button>
+                {isVisible && <List/>}
             </div>
         </>
     )
