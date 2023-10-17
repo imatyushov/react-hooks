@@ -1,40 +1,8 @@
-import {useEffect, useReducer, useRef, useState} from 'react';
+import {useReducer, useState} from 'react';
 import {initialProps, updateRandomProp} from "./utils/utils";
+import {useWhyDidUpdate} from "./customHooks/useWhyDidUpdate";
 
 //Todo: работа useEffect, только после того как состоится рендер и обновится дом
-
-export function useWhyDidUpdate(currentProps) {
-    const previousPropRef = useRef(null);
-    useEffect(() => {
-        previousPropRef.current = currentProps;
-    }, [currentProps]);
-
-    const previousProps = previousPropRef.current;
-
-    if (!previousProps) {
-        console.log('initial first render');
-        return;
-    }
-    const previousKeys = Object.keys(previousProps);
-    const currentKeys = Object.keys(currentProps);
-
-    const keys = [...new Set(currentKeys.concat(previousKeys))];
-
-    let hasChanged = false;
-
-    keys.forEach((key) => {
-        if (currentProps[key] !== previousProps[key]) {
-            console.log(`prop ${key} changed`);
-            console.log(`prev value ${previousProps[key]}`);
-            console.log(`current value ${currentProps[key]}`);
-            hasChanged = true;
-        }
-    });
-
-    if (!hasChanged) {
-        console.log('state changed')
-    }
-}
 
 function InnerComponent(props) {
     useWhyDidUpdate(props);
