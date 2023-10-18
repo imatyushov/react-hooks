@@ -1,4 +1,5 @@
-import {useEffect, useReducer, useRef, useState} from 'react';
+import {useEffect, useReducer, useState} from 'react';
+import {useIsMounted, useSafeState} from "./customHooks/useIsMounted";
 
 //Todo: жизненный цикл компонента mount -> update -> unmount
 
@@ -6,36 +7,31 @@ function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function useIsMounted() {
-    const isMounted = useRef(false);
-    useEffect(() => {
-        isMounted.current = true;
-        return () => {
-            isMounted.current = false;
-        }
-    }, [])
-    return isMounted.current;
-}
-
-
 function List() {
+    const [count, setCount] = useSafeState(0);
     const [list, setList] = useState([]);
-    const isMountedApp = useIsMounted();
-    console.log(isMountedApp)
+    const isMounted = useIsMounted();
 
     useEffect(() => {
-        sleep(3000)
-            .then(() => {setList([1, 2, 3, 4, 5])})
+        sleep(3000).then(() => {
+            if (isMounted.current) {
+                setList([1, 2, 3, 4, 5])
+            }
+        })
 
-        return () => {}
+    }, [isMounted]);
 
-    }, []);
+    const increment = () => {
+      sleep(2000).then(() => {setCount((count) => count + 1)})
+    };
 
     if (list.length === 0) {
         return <div>Loading...</div>
     }
     return (
        <ul>
+           <p>{count}</p>
+           <button onClick={increment}>Increment Async</button>
            {list.map((item) =>
                <li key={item}>{item}</li>
            )}
@@ -46,7 +42,6 @@ function List() {
 export function App() {
     const [isVisible, setIsVisible] = useState(false);
     const [, forceUpdate] = useReducer(c => c + 1, 0);
-    console.log('App updated');
 
     return (
         <>
