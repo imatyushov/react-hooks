@@ -1,29 +1,25 @@
-import {useState} from "react";
-import {batchUpdates} from './utils/batch';
+import {useEffect, useState} from "react";
+import {useTitle} from "./customHooks/useTitle";
 
-
-export function App() {
-    const [count, setCount] = useState(0);
-    const incrementSync = () => {
-        console.log('update 1');
-        setCount((c) => c + 1);
-        console.log('update 2');
-        setCount((c) => c + 1);
-    }
-    const incrementAsync = () => {
-        batchUpdates(() => {
-            Promise.resolve().then(() => {
-                incrementSync();
-            })
-        })
-    }
-
-    console.log('render');
+function TitleUpdater() {
+    const [title, setTitle] = useState('Main App');
+    useTitle(title);
     return (
         <div>
-            <div>Count: {count}</div>
-            <button onClick={incrementSync}>Increment sync</button>
-            <button onClick={incrementAsync}>Increment async</button>
+            <input
+                onChange={(event) => setTitle(event.target.value)}
+                value={title}
+            />
+        </div>
+    )
+}
+
+export function App() {
+    const [visible, setVisible] = useState(false);
+    return (
+        <div>
+            <button onClick={() => setVisible(v => !v)}>Toggle</button>
+            {visible && <TitleUpdater/>}
         </div>
     )
 }
