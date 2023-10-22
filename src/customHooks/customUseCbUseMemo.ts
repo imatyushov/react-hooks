@@ -25,6 +25,6 @@ export function useMemo<T>(computeValue: () => T, deps?: DependencyList): T {
     return computedResult;
 }
 
-export function useCallback<T extends Function>(callback: T, deps: DependencyList): T {
+export function useCallback<T extends Function>(callback: T, deps?: DependencyList): T {
     return useMemo(() => callback, [...deps]);
 }
