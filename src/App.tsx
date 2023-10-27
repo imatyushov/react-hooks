@@ -1,34 +1,39 @@
-import {memo, useReducer, useRef, useState} from "react";
-import {useCallback, useMemo} from "./customHooks/customUseCbUseMemo";
+import {debounce, throttle} from 'lodash';
+import { useLayoutEffect, useMemo, useRef, useState} from "react";
+import {makeDebounceThrottleHook} from "./customHooks/debounce/throttleHook";
 
-interface IChildComponent {
-    onClick: () => void;
+function useLatestCallback(cb) {
+    const cbRef = useRef(cb);
+    useLayoutEffect(() => {
+        cbRef.current = cb;
+    }, [cb]);
+    return cbRef;
 }
-const ChildComponent = memo(({onClick}: IChildComponent) => {
-    console.log('Update SUBCOMPONENT');
-    return null;
-})
+
+const useDebounce = makeDebounceThrottleHook(debounce);
+const useThrottle = makeDebounceThrottleHook(throttle);
+
 
 export function App() {
-    const [count, setCount] = useState(0);
-    const [, forceUpdate] = useReducer((state) => state + 1, 0);
+    const [inputValue, setInputValue ] = useState('');
 
-    const doubleCount = useMemo(() => {
-        console.log('Memo update');
-        return count * 2;
-    }, [count]);
+    const makeRequest = useThrottle((req) => {
+        console.log('make req:', req);
+    }, 400);
 
-    console.log('============');
-
-    const onClick = useCallback(() => {
-        console.log(doubleCount);
-    }, [doubleCount]);
-
+    const handleQueryChange = (event) => {
+        const {value} = event.target;
+        makeRequest(value);
+        setInputValue(value);
+    };
+    
     return (
         <div>
-        <div>{count}</div>
-            <button onClick={forceUpdate}>Update</button>
-            <button onClick={() => setCount((co) => count + 1)}>Increment</button>
-            <ChildComponent  onClick={onClick}/>
-        </div>)
+            <input
+                value={inputValue}
+                onChange={handleQueryChange}
+                placeholder={'Search...'}
+            />
+        </div>
+    )
 }
