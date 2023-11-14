@@ -1,39 +1,78 @@
-import {debounce, throttle} from 'lodash';
-import { useLayoutEffect, useMemo, useRef, useState} from "react";
-import {makeDebounceThrottleHook} from "./customHooks/debounce/throttleHook";
+import React, {
+    useCallback,
+    useEffect,
+    useInsertionEffect,
+    useRef,
+    useState
+} from "react";
+import {useMutationObserver} from "./customHooks/useMutationObserver";
 
-function useLatestCallback(cb) {
-    const cbRef = useRef(cb);
-    useLayoutEffect(() => {
-        cbRef.current = cb;
-    }, [cb]);
-    return cbRef;
+
+function useCombinedRefs(...refs) {
+    const combineRef = useCallback((element) => {
+        refs.forEach((ref) => {
+            if (!ref) return;
+            if (typeof ref === 'function') {
+                ref(element);
+            } else {
+                ref.current = element;
+            }
+        })
+    }, [refs]);
+    return combineRef;
 }
 
-const useDebounce = makeDebounceThrottleHook(debounce);
-const useThrottle = makeDebounceThrottleHook(throttle);
+const options = {
+    attributes: true
+}
 
+
+function MutationObserverComponent(props) {
+    const { onMutation, children, options, nodeRef } = props;
+    const mutationRef = useMutationObserver(
+        onMutation,
+        options
+    );
+    const combinedRef = useCombinedRefs(mutationRef, nodeRef);
+    return children(combinedRef);
+}
 
 export function App() {
-    const [inputValue, setInputValue ] = useState('');
+    const elementRef = useRef(null);
+    const [value, setValue] = useState('');
+    const [bool, setBool] = useState(false);
 
-    const makeRequest = useThrottle((req) => {
-        console.log('make req:', req);
-    }, 400);
+    const Tag = bool ? 'div' : 'section';
 
-    const handleQueryChange = (event) => {
-        const {value} = event.target;
-        makeRequest(value);
-        setInputValue(value);
-    };
-    
+    useEffect(() => {
+        console.log(elementRef.current);
+    }, [elementRef]);
+
+    const mutationRef = useMutationObserver(
+        () => console.log('======'),
+        options
+    )
+
+    const combinedRef = useCombinedRefs(elementRef, mutationRef);
     return (
         <div>
+            <div>
+                <button onClick={() => setBool((v) => !v)}>
+                    Toggle
+                </button>
+            </div>
             <input
-                value={inputValue}
-                onChange={handleQueryChange}
-                placeholder={'Search...'}
+                value={value}
+                onChange={(event) => setValue(event.target.value) }
             />
+            <MutationObserverComponent
+                nodeRef={elementRef}
+                options={options}
+                onMutation={() => console.log('=========')}>
+                {(ref) => bool && <Tag ref={ref} className={value}>
+                    {value}
+                </Tag>}
+            </MutationObserverComponent>
         </div>
     )
 }
